@@ -8,6 +8,8 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System.Drawing.Imaging;
 using System.IO.Compression;
+using System.Collections.Generic;
+using System;
 
 namespace ScreenStreamServer
 {
@@ -20,17 +22,21 @@ namespace ScreenStreamServer
         {
             //timer = new System.Timers.Timer();
             //timer.Interval = 10;
-            
+
             //timer.Elapsed += SendScreen;
             //timer.AutoReset = true;
             //timer.Enabled = true;
+
+            //List<byte[]> picChunkL = new List<byte[]>();
 
             var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp); // 65Kb
             var ep = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 7534);
 
             socket.Bind(ep);
 
-            var bytes = new byte[socket.ReceiveBufferSize];
+            var SocketLength = socket.ReceiveBufferSize;
+
+            var bytes = new byte[SocketLength];
 
             while (true)
             {
@@ -41,20 +47,50 @@ namespace ScreenStreamServer
                     var length = socket.ReceiveFrom(bytes, ref client);
                     var msg = Encoding.Default.GetString(bytes, 0, length);
 
+                    //picChunkL.Clear();
+
                     if (msg != "")
                     {
                         var sendBytes = SendScreen();
-                        socket.SendTo(sendBytes, client);
 
+                        var picLength = sendBytes.Length;
+                        //var parts = picLength % SocketLength + 1;
+                        int minChunkLength = 0;
+
+                        for (int i = 0; i < picLength;)
+                        {
+                            var chunk = new byte[minChunkLength];
+
+                            for (int j = 0; j < chunk.Length; j++, i++)
+                            {
+                                chunk[j] = sendBytes[i];
+                            }
+
+                            socket.SendTo(chunk, client);
+                            //picChunkL.Add(chunk);
+
+                            if (i < SocketLength)
+                            {
+                                minChunkLength = SocketLength;
+                            }
+                        }
+
+                        //var binFormatter = new BinaryFormatter();
+                        //var mStream = new MemoryStream();
+
+                        //binFormatter.Serialize(mStream, picChunkL);
+                        //socket.SendTo(mStream.ToArray(), client);
+                        
                         msg = string.Empty;
                     }
                     else
                         break;
-                } 
+                }
             }
         }
 
         //------------------------------------------------------------------------
+
 
         static byte[] SendScreen()
         {
@@ -63,21 +99,27 @@ namespace ScreenStreamServer
             graph = Graphics.FromImage(bmp);
             graph.CopyFromScreen(0, 0, 0, 0, bmp.Size);
 
+            byte[] picB = null;
+
             using (var mStream = new MemoryStream())
             {
                 bmp.Save(mStream, ImageFormat.Jpeg);
 
-            }
-            return mStream.ToArray();
-
-            using (var wms = new MemoryStream())
-            {
-                using (var ds = new DeflateStream(wms, CompressionMode.Compress))
-                {
-                    ds.Write();
-                } 
+                picB = mStream.ToArray();
             }
 
+            return picB;
         }
     }
 }
+
+//byte[] picB = null;
+//  picB = mStream.ToArray();
+
+//using (var wms = new MemoryStream())
+//{
+//    using (var ds = new GZipStream(wms, CompressionMode.Compress))
+//    {
+//        mStream.CopyTo(ds);
+//    }
+//}
