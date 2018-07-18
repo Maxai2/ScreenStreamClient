@@ -1,11 +1,17 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace ScreenStreamClient
 {
@@ -42,7 +48,7 @@ namespace ScreenStreamClient
             set { disconButVis = value; OnChanged(); }
         }
 
-        private Visibility streamingPanelVis;
+        private Visibility streamingPanelVis = Visibility.Collapsed;
         public Visibility StreamingPanelVis
         {
             get { return streamingPanelVis; }
@@ -78,7 +84,10 @@ namespace ScreenStreamClient
                             socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
                             ep = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 7534);
 
-                            Streaming();
+                            StreamingPanelVis = Visibility.Visible;
+
+                            ConButVis = Visibility.Collapsed;
+                            DisconButVis = Visibility.Visible;
                         },
                         (param) =>
                         {
@@ -132,6 +141,7 @@ namespace ScreenStreamClient
                 return pauseCom;
             }
         }
+        public DependencyObjectType Sourcecc { get; set; }
 
         private ICommand playCom;
         public ICommand PlayCom
@@ -143,7 +153,18 @@ namespace ScreenStreamClient
                     playCom = new RelayCommand(
                         (param) =>
                         {
+                            while (true)
+                            {
+                                Streaming();
 
+                                using (var ms = new MemoryStream(picB))
+                                {
+                                    var image = Bitmap.FromStream(ms);
+                                    ImageSourceConverter awd = new ImageSourceConverter();
+                                    var source = (ImageSource)awd.ConvertFrom(image);
+                                    Im.Source = source;
+                                }
+                            }
                         });
                 }
 
@@ -162,22 +183,31 @@ namespace ScreenStreamClient
 
         //----------------------------------------------------------------------
 
+        byte[] picB = new byte[1000000000];
+
         void Streaming()
         {
-            var answer = new byte[8192];
+            var msg = "Connect";
+            var data = Encoding.Default.GetBytes(msg);
+            socket.SendTo(data, ep);
+
+            int i = 0;
 
             while (true)
             {
-                var msg = "Connect";
-                var data = Encoding.Default.GetBytes(msg);
-                socket.SendTo(data, ep);
+                var answer = new byte[socket.ReceiveBufferSize / 2];
 
                 var length = socket.Receive(answer);
 
                 if (length != 0)
                 {
-                    MessageBox.Show(answer.ToString());
+                    for (int j = 0; j < length; j++, i++)
+                    {
+                        picB[i] = answer[j];
+                    }
                 }
+                else
+                    break;
             }
         }
 

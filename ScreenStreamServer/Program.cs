@@ -34,7 +34,7 @@ namespace ScreenStreamServer
 
             socket.Bind(ep);
 
-            var SocketLength = socket.ReceiveBufferSize;
+            var SocketLength = socket.ReceiveBufferSize / 2;
 
             var bytes = new byte[SocketLength];
 
@@ -54,8 +54,9 @@ namespace ScreenStreamServer
                         var sendBytes = SendScreen();
 
                         var picLength = sendBytes.Length;
+                        var tempLength = sendBytes.Length;
                         //var parts = picLength % SocketLength + 1;
-                        int minChunkLength = 0;
+                        int minChunkLength = SocketLength;
 
                         for (int i = 0; i < picLength;)
                         {
@@ -69,9 +70,14 @@ namespace ScreenStreamServer
                             socket.SendTo(chunk, client);
                             //picChunkL.Add(chunk);
 
-                            if (i < SocketLength)
+                            if (tempLength - SocketLength > 0)
                             {
-                                minChunkLength = SocketLength;
+                                tempLength -= SocketLength;
+
+                                if (tempLength < SocketLength)
+                                {
+                                    minChunkLength = tempLength;
+                                }
                             }
                         }
 
@@ -80,7 +86,7 @@ namespace ScreenStreamServer
 
                         //binFormatter.Serialize(mStream, picChunkL);
                         //socket.SendTo(mStream.ToArray(), client);
-                        
+
                         msg = string.Empty;
                     }
                     else
