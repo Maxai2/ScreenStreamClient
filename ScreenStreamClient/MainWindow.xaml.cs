@@ -204,6 +204,7 @@ namespace ScreenStreamClient
                     for (int j = 0; j < length; j++, i++)
                     {
                         picB[i] = answer[j];
+                        //Array.Copy()
                     }
                 }
                 else
