@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.ComponentModel;
+using System.Drawing;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
@@ -14,15 +16,15 @@ namespace ScreenStreamClient
         Socket socket;
         EndPoint ep;
 
-        private string conDisConIp;
+        private string conDisConIp = "127.0.0.1";
         public string ConDisConIp
         {
             get { return conDisConIp; }
             set { conDisConIp = value; OnChanged(); }
         }
 
-        private string screenPic;
-        public string ScreenPic
+        private Bitmap screenPic;
+        public Bitmap ScreenPic
         {
             get { return screenPic; }
             set { screenPic = value; OnChanged(); }
@@ -164,7 +166,7 @@ namespace ScreenStreamClient
 
         void Streaming()
         {
-            var answer = new byte[8192];
+            var answer = new byte[socket.ReceiveBufferSize];
 
             while (true)
             {
@@ -176,8 +178,12 @@ namespace ScreenStreamClient
 
                 if (length != 0)
                 {
-                    MessageBox.Show(answer.ToString());
+                    var bitmap = JsonConvert.DeserializeObject<Bitmap>(answer.ToString());
+
+
+
                 }
+                //Encoding.Default.GetString(answer)Convert.ToBase64String((byte[])converter.ConvertTo(answer, typeof(byte[])))
             }
         }
 

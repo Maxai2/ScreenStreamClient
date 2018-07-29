@@ -1,15 +1,13 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Timers;
 using System.Drawing;
 using System.Windows.Forms;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System.Drawing.Imaging;
-using System.IO.Compression;
-using System.Collections.Generic;
 using System;
+using System.IO.Compression;
+using Newtonsoft.Json;
 
 namespace ScreenStreamServer
 {
@@ -53,34 +51,8 @@ namespace ScreenStreamServer
                     {
                         var sendBytes = SendScreen();
 
-                        var picLength = sendBytes.Length;
-                        //var parts = picLength % SocketLength + 1;
-                        int minChunkLength = 0;
+                        socket.SendTo(sendBytes, client);
 
-                        for (int i = 0; i < picLength;)
-                        {
-                            var chunk = new byte[minChunkLength];
-
-                            for (int j = 0; j < chunk.Length; j++, i++)
-                            {
-                                chunk[j] = sendBytes[i];
-                            }
-
-                            socket.SendTo(chunk, client);
-                            //picChunkL.Add(chunk);
-
-                            if (i < SocketLength)
-                            {
-                                minChunkLength = SocketLength;
-                            }
-                        }
-
-                        //var binFormatter = new BinaryFormatter();
-                        //var mStream = new MemoryStream();
-
-                        //binFormatter.Serialize(mStream, picChunkL);
-                        //socket.SendTo(mStream.ToArray(), client);
-                        
                         msg = string.Empty;
                     }
                     else
@@ -91,7 +63,6 @@ namespace ScreenStreamServer
 
         //------------------------------------------------------------------------
 
-
         static byte[] SendScreen()
         {
             Graphics graph = null;
@@ -99,27 +70,21 @@ namespace ScreenStreamServer
             graph = Graphics.FromImage(bmp);
             graph.CopyFromScreen(0, 0, 0, 0, bmp.Size);
 
-            byte[] picB = null;
-
-            using (var mStream = new MemoryStream())
-            {
-                bmp.Save(mStream, ImageFormat.Jpeg);
-
-                picB = mStream.ToArray();
-            }
+            byte[] picB = Encoding.Default.GetBytes(JsonConvert.SerializeObject(bmp));
 
             return picB;
         }
     }
 }
 
-//byte[] picB = null;
-//  picB = mStream.ToArray();
+            //using (var mStream = new MemoryStream())
+            //{
+            //    bmp.Save(mStream, ImageFormat.Jpeg);
 
-//using (var wms = new MemoryStream())
-//{
-//    using (var ds = new GZipStream(wms, CompressionMode.Compress))
-//    {
-//        mStream.CopyTo(ds);
-//    }
-//}
+            //    picB = mStream.ToArray();
+
+            //    //using (var ds = new DeflateStream(mStream, CompressionLevel.Optimal))
+            //    //{
+            //    //    mStream.Write(picB, 0, picB.Length);
+            //    //}
+            //}
