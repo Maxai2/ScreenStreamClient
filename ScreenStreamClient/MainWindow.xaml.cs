@@ -181,7 +181,13 @@ namespace ScreenStreamClient
                     var bitmap = JsonConvert.DeserializeObject<Bitmap>(answer.ToString());
 
 
-
+                    using (var ms = new MemoryStream(picB))
+                    {
+                        var image = Bitmap.FromStream(ms);
+                        ImageSourceConverter awd = new ImageSourceConverter();
+                        var source = (ImageSource)awd.ConvertFrom(image);
+                        Im.Source = source;
+                    }
                 }
                 //Encoding.Default.GetString(answer)Convert.ToBase64String((byte[])converter.ConvertTo(answer, typeof(byte[])))
             }
