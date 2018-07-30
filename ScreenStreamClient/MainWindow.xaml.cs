@@ -2,12 +2,14 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace ScreenStreamClient
 {
@@ -23,8 +25,8 @@ namespace ScreenStreamClient
             set { conDisConIp = value; OnChanged(); }
         }
 
-        private Bitmap screenPic;
-        public Bitmap ScreenPic
+        private ImageSource screenPic;
+        public ImageSource ScreenPic
         {
             get { return screenPic; }
             set { screenPic = value; OnChanged(); }
@@ -64,6 +66,8 @@ namespace ScreenStreamClient
             get { return playButVis; }
             set { playButVis = value; OnChanged(); }
         }
+
+        byte[] picB = new byte[1000000];
 
         //----------------------------------------------------------------------
 
@@ -166,7 +170,7 @@ namespace ScreenStreamClient
 
         void Streaming()
         {
-            var answer = new byte[socket.ReceiveBufferSize];
+            var answer = new byte[socket.ReceiveBufferSize - 100];
 
             while (true)
             {
@@ -178,19 +182,26 @@ namespace ScreenStreamClient
 
                 if (length != 0)
                 {
-                    var bitmap = JsonConvert.DeserializeObject<Bitmap>(answer.ToString());
-
-
-                    using (var ms = new MemoryStream(picB))
+                    for (int i = 0, j = 0; i < answer.Length; i++, j++)
                     {
-                        var image = Bitmap.FromStream(ms);
-                        ImageSourceConverter awd = new ImageSourceConverter();
-                        var source = (ImageSource)awd.ConvertFrom(image);
-                        Im.Source = source;
+                        picB[j] = answer[i];
                     }
+
                 }
-                //Encoding.Default.GetString(answer)Convert.ToBase64String((byte[])converter.ConvertTo(answer, typeof(byte[])))
+                else
+                    break;
             }
+
+            ShowPic(picB);
+        }
+
+        //----------------------------------------------------------------------
+
+        void ShowPic(byte[] arr)
+        {
+            ImageSourceConverter awd = new ImageSourceConverter();
+            ImageSource source = (ImageSource)awd.ConvertFrom(arr);
+            ScreenPic = source;
         }
 
         //----------------------------------------------------------------------

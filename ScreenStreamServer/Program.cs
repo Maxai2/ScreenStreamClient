@@ -32,7 +32,7 @@ namespace ScreenStreamServer
 
             socket.Bind(ep);
 
-            var SocketLength = socket.ReceiveBufferSize;
+            var SocketLength = socket.ReceiveBufferSize - 100;
 
             var bytes = new byte[SocketLength];
 
@@ -50,8 +50,24 @@ namespace ScreenStreamServer
                     if (msg != "")
                     {
                         var sendBytes = SendScreen();
+                        var tempSendBytes = sendBytes.Length;
 
-                        socket.SendTo(sendBytes, client);
+                        for (int i = 0; i < sendBytes.Length; )
+                        {
+                            var sendArr = new byte[SocketLength];
+
+                            for (int j = 0; j < sendArr.Length; ++j, ++i, --tempSendBytes)
+                            {
+                                sendArr[j] = sendBytes[i];
+                            }
+
+                            socket.SendTo(sendArr, client);
+
+                            if (tempSendBytes - SocketLength < 0)
+                            {
+                                SocketLength = tempSendBytes;
+                            }
+                        }
 
                         msg = string.Empty;
                     }
@@ -70,21 +86,24 @@ namespace ScreenStreamServer
             graph = Graphics.FromImage(bmp);
             graph.CopyFromScreen(0, 0, 0, 0, bmp.Size);
 
-            byte[] picB = Encoding.Default.GetBytes(JsonConvert.SerializeObject(bmp));
+            //byte[] picB = Encoding.Default.GetBytes(JsonConvert.SerializeObject(bmp));
 
-            return picB;
+            //var picB = new byte[1000000];
+
+            using (var mStream = new MemoryStream())
+            {
+                bmp.Save(mStream, ImageFormat.Jpeg);
+
+                return mStream.ToArray();
+
+                //using (var ds = new DeflateStream(mStream, CompressionLevel.Optimal))
+                //{
+                //    mStream.Write(picB, 0, picB.Length);
+                //}
+            }
+
+            //return picB;
         }
     }
 }
 
-            //using (var mStream = new MemoryStream())
-            //{
-            //    bmp.Save(mStream, ImageFormat.Jpeg);
-
-            //    picB = mStream.ToArray();
-
-            //    //using (var ds = new DeflateStream(mStream, CompressionLevel.Optimal))
-            //    //{
-            //    //    mStream.Write(picB, 0, picB.Length);
-            //    //}
-            //}
