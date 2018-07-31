@@ -47,6 +47,16 @@ namespace ScreenStreamServer
 
                     Console.WriteLine(msg);
 
+                    switch (msg)
+                    {
+                        case "Play":
+
+                            break;
+                        case "Connect":
+                        case "Pause":
+                            break;
+                    }
+
                     //picChunkL.Clear();
 
                     if (msg != "")

@@ -86,6 +86,10 @@ namespace ScreenStreamClient
                             socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
                             ep = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 7534);
 
+                            var msg = "Connect";
+                            var data = Encoding.Default.GetBytes(msg);
+                            socket.SendTo(data, ep);
+                               
                             ConButVis = Visibility.Collapsed;
                             disconButVis = Visibility.Visible;
                         },
@@ -190,9 +194,6 @@ namespace ScreenStreamClient
 
             picB = new byte[500000];
 
-            var msg = "Connect";
-            var data = Encoding.Default.GetBytes(msg);
-            socket.SendTo(data, ep);
             var picBCounter = 0;
 
             while (true)
