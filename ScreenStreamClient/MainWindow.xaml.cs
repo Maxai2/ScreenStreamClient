@@ -7,9 +7,11 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Timers;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace ScreenStreamClient
 {
@@ -67,7 +69,7 @@ namespace ScreenStreamClient
             set { playButVis = value; OnChanged(); }
         }
 
-        byte[] picB = new byte[1000000];
+        byte[] picB = null;
 
         //----------------------------------------------------------------------
 
@@ -84,7 +86,8 @@ namespace ScreenStreamClient
                             socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
                             ep = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 7534);
 
-                            Streaming();
+                            ConButVis = Visibility.Collapsed;
+                            disconButVis = Visibility.Visible;
                         },
                         (param) =>
                         {
@@ -121,24 +124,6 @@ namespace ScreenStreamClient
             }
         }
 
-        private ICommand pauseCom;
-        public ICommand PauseCom
-        {
-            get
-            {
-                if (pauseCom is null)
-                {
-                    pauseCom = new RelayCommand(
-                        (param) =>
-                        {
-
-                        });
-                }
-
-                return pauseCom;
-            }
-        }
-
         private ICommand playCom;
         public ICommand PlayCom
         {
@@ -149,7 +134,10 @@ namespace ScreenStreamClient
                     playCom = new RelayCommand(
                         (param) =>
                         {
+                            PlayButVis = Visibility.Collapsed;
+                            PauseButVis = Visibility.Visible;
 
+                            timer.Start();
                         });
                 }
 
@@ -157,13 +145,41 @@ namespace ScreenStreamClient
             }
         }
 
+        private ICommand pauseCom;
+        public ICommand PauseCom
+        {
+            get
+            {
+                if (pauseCom is null)
+                {
+                    pauseCom = new RelayCommand(
+                        (param) =>
+                        {
+                            timer.Stop();
+
+                            PlayButVis = Visibility.Visible;
+                            PauseButVis = Visibility.Collapsed;
+                        });
+                }
+
+                return pauseCom;
+            }
+        }
+
         //----------------------------------------------------------------------
+        Timer timer;
 
         public MainWindow()
         {
             InitializeComponent();
 
             DataContext = this;
+
+            timer = new Timer();
+            timer.Interval = 10;
+            timer.Elapsed += ((s, e) =>  Streaming());
+            timer.AutoReset = true;
+            timer.Enabled = true;
         }
 
         //----------------------------------------------------------------------
@@ -172,36 +188,53 @@ namespace ScreenStreamClient
         {
             var answer = new byte[socket.ReceiveBufferSize - 100];
 
+            picB = new byte[500000];
+
+            var msg = "Connect";
+            var data = Encoding.Default.GetBytes(msg);
+            socket.SendTo(data, ep);
+            var picBCounter = 0;
+
             while (true)
             {
-                var msg = "Connect";
-                var data = Encoding.Default.GetBytes(msg);
-                socket.SendTo(data, ep);
-
                 var length = socket.Receive(answer);
 
                 if (length != 0)
                 {
-                    for (int i = 0, j = 0; i < answer.Length; i++, j++)
-                    {
-                        picB[j] = answer[i];
-                    }
+                    //for (int i = 0; i < answer.Length; ++i, ++picBCounter)
+                    //{
+                    //    picB[picBCounter] = answer[i];
+                    //}
 
+                    Array.Copy(answer, 0, picB, picBCounter, answer.Length);
+
+                    picBCounter += answer.Length;
                 }
                 else
                     break;
             }
 
             ShowPic(picB);
+
         }
 
         //----------------------------------------------------------------------
 
         void ShowPic(byte[] arr)
         {
-            ImageSourceConverter awd = new ImageSourceConverter();
-            ImageSource source = (ImageSource)awd.ConvertFrom(arr);
-            ScreenPic = source;
+            using (var ms = new MemoryStream(arr))
+            {
+                BitmapImage biImg = new BitmapImage();
+                biImg.BeginInit();
+                biImg.StreamSource = ms;
+                biImg.EndInit();
+
+                ImageSource imgSrc = biImg as ImageSource;
+
+                ScreenPic = imgSrc;
+            }
+
+            picB = null;
         }
 
         //----------------------------------------------------------------------

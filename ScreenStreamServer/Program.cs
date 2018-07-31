@@ -45,27 +45,38 @@ namespace ScreenStreamServer
                     var length = socket.ReceiveFrom(bytes, ref client);
                     var msg = Encoding.Default.GetString(bytes, 0, length);
 
+                    Console.WriteLine(msg);
+
                     //picChunkL.Clear();
 
                     if (msg != "")
                     {
                         var sendBytes = SendScreen();
                         var tempSendBytes = sendBytes.Length;
+                        var sendBytesCounter = 0;
+                        bool exit = true;
 
-                        for (int i = 0; i < sendBytes.Length; )
+                        while (exit)
                         {
                             var sendArr = new byte[SocketLength];
 
-                            for (int j = 0; j < sendArr.Length; ++j, ++i, --tempSendBytes)
-                            {
-                                sendArr[j] = sendBytes[i];
-                            }
+                            Array.Copy(sendBytes, sendBytesCounter, sendArr, 0, sendArr.Length);
+
+                            //for (int j = 0; j < sendArr.Length; ++j, ++i)
+                            //{
+                            //    sendArr[j] = sendBytes[i];
+                            //}
 
                             socket.SendTo(sendArr, client);
+
+                            tempSendBytes -= SocketLength;
+                            sendBytesCounter += SocketLength;
 
                             if (tempSendBytes - SocketLength < 0)
                             {
                                 SocketLength = tempSendBytes;
+                                exit = false;
+                                socket.SendTo(new byte[0], client);
                             }
                         }
 
