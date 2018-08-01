@@ -48,11 +48,11 @@ namespace ScreenStreamClient
             set { disconButVis = value; OnChanged(); }
         }
 
-        private Visibility streamingPanelVis;
-        public Visibility StreamingPanelVis
+        private bool streamingPanelEnab = false;
+        public bool StreamingPanelEnab
         {
-            get { return streamingPanelVis; }
-            set { streamingPanelVis = value; OnChanged(); }
+            get { return streamingPanelEnab; }
+            set { streamingPanelEnab = value; OnChanged(); }
         }
 
         private Visibility pauseButVis;
@@ -91,7 +91,8 @@ namespace ScreenStreamClient
                             socket.SendTo(data, ep);
                                
                             ConButVis = Visibility.Collapsed;
-                            disconButVis = Visibility.Visible;
+                            DisconButVis = Visibility.Visible;
+                            StreamingPanelEnab = true;
                         },
                         (param) =>
                         {
@@ -121,6 +122,7 @@ namespace ScreenStreamClient
 
                             ConButVis = Visibility.Visible;
                             DisconButVis = Visibility.Collapsed;
+                            StreamingPanelEnab = false;
                         });
                 }
 
@@ -141,6 +143,10 @@ namespace ScreenStreamClient
                             PlayButVis = Visibility.Collapsed;
                             PauseButVis = Visibility.Visible;
 
+                            var msg = "Play";
+                            var data = Encoding.Default.GetBytes(msg);
+                            socket.SendTo(data, ep);
+
                             timer.Start();
                         });
                 }
@@ -159,6 +165,10 @@ namespace ScreenStreamClient
                     pauseCom = new RelayCommand(
                         (param) =>
                         {
+                            var msg = "Pause";
+                            var data = Encoding.Default.GetBytes(msg);
+                            socket.SendTo(data, ep);
+
                             timer.Stop();
 
                             PlayButVis = Visibility.Visible;
@@ -183,7 +193,7 @@ namespace ScreenStreamClient
             timer.Interval = 10;
             timer.Elapsed += ((s, e) =>  Streaming());
             timer.AutoReset = true;
-            timer.Enabled = true;
+            //timer.Enabled = true;
         }
 
         //----------------------------------------------------------------------
@@ -223,16 +233,19 @@ namespace ScreenStreamClient
 
         void ShowPic(byte[] arr)
         {
-            using (var ms = new MemoryStream(arr))
+            using (var ms = new MemoryStream(arr, 0, arr.Length))
             {
-                BitmapImage biImg = new BitmapImage();
-                biImg.BeginInit();
-                biImg.StreamSource = ms;
-                biImg.EndInit();
+                //BitmapImage biImg = new BitmapImage();
+                //biImg.BeginInit();
+                //biImg.CacheOption = BitmapCacheOption.OnLoad;
+                //biImg.StreamSource = ms;
+                //biImg.EndInit();
 
-                ImageSource imgSrc = biImg as ImageSource;
+                //ImageSource imgSrc = biImg as ImageSource;
 
-                ScreenPic = imgSrc;
+                //ScreenPic = imgSrc;
+
+                
             }
 
             picB = null;

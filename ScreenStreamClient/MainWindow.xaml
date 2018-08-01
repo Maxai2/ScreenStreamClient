@@ -29,7 +29,7 @@
 			<Button Grid.Column="1" Margin="5 0 0 0" Content="Disconnect" Visibility="{Binding DisconButVis}" Command="{Binding DisconnectCom}"/>
 		</Grid>
 
-		<Grid Grid.Row="1" Visibility="{Binding StreamingPanelVis}">
+		<Grid Grid.Row="1" IsEnabled="{Binding StreamingPanelEnab}">
 
 			<Image Margin="0 10" Source="{Binding ScreenPic}" />
 

@@ -42,6 +42,8 @@ namespace ScreenStreamServer
 
                 while (true)
                 {
+                    ConnectPausePoint:
+
                     var length = socket.ReceiveFrom(bytes, ref client);
                     var msg = Encoding.Default.GetString(bytes, 0, length);
 
@@ -49,11 +51,10 @@ namespace ScreenStreamServer
 
                     switch (msg)
                     {
-                        case "Play":
-
-                            break;
                         case "Connect":
                         case "Pause":
+                            goto ConnectPausePoint;
+                        case "Play":
                             break;
                     }
 
