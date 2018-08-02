@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.IO;
@@ -12,6 +11,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Forms;
 
 namespace ScreenStreamClient
 {
@@ -89,7 +89,7 @@ namespace ScreenStreamClient
                             var msg = "Connect";
                             var data = Encoding.Default.GetBytes(msg);
                             socket.SendTo(data, ep);
-                               
+
                             ConButVis = Visibility.Collapsed;
                             DisconButVis = Visibility.Visible;
                             StreamingPanelEnab = true;
@@ -181,7 +181,7 @@ namespace ScreenStreamClient
         }
 
         //----------------------------------------------------------------------
-        Timer timer;
+        System.Timers.Timer timer;
 
         public MainWindow()
         {
@@ -189,9 +189,9 @@ namespace ScreenStreamClient
 
             DataContext = this;
 
-            timer = new Timer();
+            timer = new System.Timers.Timer();
             timer.Interval = 10;
-            timer.Elapsed += ((s, e) =>  Streaming());
+            timer.Elapsed += ((s, e) => Streaming());
             timer.AutoReset = true;
             //timer.Enabled = true;
         }
@@ -233,19 +233,27 @@ namespace ScreenStreamClient
 
         void ShowPic(byte[] arr)
         {
-            using (var ms = new MemoryStream(arr, 0, arr.Length))
+            //using (var ms = new MemoryStream(arr, 0, arr.Length))
+            //{
+            //    BitmapImage biImg = new BitmapImage();
+            //    biImg.BeginInit();
+            //    biImg.CacheOption = BitmapCacheOption.OnLoad;
+            //    biImg.StreamSource = ms;
+            //    biImg.EndInit();
+
+            //    ImageSource imgSrc = biImg as ImageSource;
+
+            //    ScreenPic = imgSrc;
+
+
+            //}
+
+
+            using (var ms = new MemoryStream(arr))
             {
-                //BitmapImage biImg = new BitmapImage();
-                //biImg.BeginInit();
-                //biImg.CacheOption = BitmapCacheOption.OnLoad;
-                //biImg.StreamSource = ms;
-                //biImg.EndInit();
+                Bitmap bitmap = new Bitmap(ms);
 
-                //ImageSource imgSrc = biImg as ImageSource;
-
-                //ScreenPic = imgSrc;
-
-                
+                ScreenPic = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(bitmap.GetHbitmap(), IntPtr.Zero, System.Windows.Int32Rect.Empty, BitmapSizeOptions.FromWidthAndHeight(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height));
             }
 
             picB = null;

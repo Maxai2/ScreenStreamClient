@@ -6,8 +6,6 @@ using System.Windows.Forms;
 using System.IO;
 using System.Drawing.Imaging;
 using System;
-using System.IO.Compression;
-using Newtonsoft.Json;
 
 namespace ScreenStreamServer
 {
