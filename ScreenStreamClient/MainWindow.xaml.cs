@@ -215,7 +215,7 @@ namespace ScreenStreamClient
         {
             var answer = new byte[socket.ReceiveBufferSize - 100];
 
-            picB = new byte[1000000];
+            picB = new byte[500000];
 
             var picBCounter = 0;
 

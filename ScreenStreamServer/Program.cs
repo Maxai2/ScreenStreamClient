@@ -22,10 +22,10 @@ namespace ScreenStreamServer
         static void Main(string[] args)
         {
             timer = new System.Timers.Timer();
-            timer.Interval = 1000;
+            timer.Interval = 10;
 
             timer.Elapsed += ((s, e) => StreamingScreenToClient() );
-            timer.AutoReset = true;
+            timer.AutoReset = false;
             //timer.Enabled = true;
 
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp); // 65Kb
