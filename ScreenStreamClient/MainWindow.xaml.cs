@@ -70,6 +70,7 @@ namespace ScreenStreamClient
         }
 
         byte[] picB = null;
+        bool playPause;
 
         //----------------------------------------------------------------------
 
@@ -117,6 +118,10 @@ namespace ScreenStreamClient
                     disconnectCom = new RelayCommand(
                         (param) =>
                         {
+                            var msg = "Disconnect";
+                            var data = Encoding.Default.GetBytes(msg);
+                            socket.SendTo(data, ep);
+
                             socket.Shutdown(SocketShutdown.Both);
                             socket.Close();
 
@@ -148,7 +153,12 @@ namespace ScreenStreamClient
                             socket.SendTo(data, ep);
 
                             //timer.Start();
-                            Streaming();
+                            playPause = true;
+
+                            while (playPause)
+                            {
+                                Streaming();
+                            }
                         }); 
                 }
 
@@ -171,6 +181,7 @@ namespace ScreenStreamClient
                             socket.SendTo(data, ep);
 
                             //timer.Stop();
+                            playPause = false;
 
                             PlayButVis = Visibility.Visible;
                             PauseButVis = Visibility.Collapsed;
@@ -204,7 +215,7 @@ namespace ScreenStreamClient
         {
             var answer = new byte[socket.ReceiveBufferSize - 100];
 
-            picB = new byte[500000];
+            picB = new byte[1000000];
 
             var picBCounter = 0;
 
@@ -227,7 +238,19 @@ namespace ScreenStreamClient
                     break;
             }
 
-            ShowPic(picB, picBCounter);
+            using (var ms = new MemoryStream(picB, 0, picBCounter))
+            {
+                ms.Seek(0, SeekOrigin.Begin);
+                BitmapImage biImg = new BitmapImage();
+                biImg.BeginInit();
+                biImg.CacheOption = BitmapCacheOption.OnLoad;
+                biImg.StreamSource = ms;
+                biImg.EndInit();
+
+                ImageSource imgSrc = biImg as ImageSource;
+
+                ScreenPic = imgSrc;
+            }
 
         }
 
