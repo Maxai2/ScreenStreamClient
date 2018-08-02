@@ -147,8 +147,9 @@ namespace ScreenStreamClient
                             var data = Encoding.Default.GetBytes(msg);
                             socket.SendTo(data, ep);
 
-                            timer.Start();
-                        });
+                            //timer.Start();
+                            Streaming();
+                        }); 
                 }
 
                 return playCom;
@@ -169,7 +170,7 @@ namespace ScreenStreamClient
                             var data = Encoding.Default.GetBytes(msg);
                             socket.SendTo(data, ep);
 
-                            timer.Stop();
+                            //timer.Stop();
 
                             PlayButVis = Visibility.Visible;
                             PauseButVis = Visibility.Collapsed;
@@ -181,7 +182,8 @@ namespace ScreenStreamClient
         }
 
         //----------------------------------------------------------------------
-        System.Timers.Timer timer;
+
+        //System.Timers.Timer timer;
 
         public MainWindow()
         {
@@ -189,10 +191,10 @@ namespace ScreenStreamClient
 
             DataContext = this;
 
-            timer = new System.Timers.Timer();
-            timer.Interval = 10;
-            timer.Elapsed += ((s, e) => Streaming());
-            timer.AutoReset = true;
+            //timer = new System.Timers.Timer();
+            //timer.Interval = 10;
+            //timer.Elapsed += ((s, e) => Streaming());
+            //timer.AutoReset = true;
             //timer.Enabled = true;
         }
 
@@ -225,38 +227,36 @@ namespace ScreenStreamClient
                     break;
             }
 
-            ShowPic(picB);
+            ShowPic(picB, picBCounter);
 
         }
 
         //----------------------------------------------------------------------
 
-        void ShowPic(byte[] arr)
+        void ShowPic(byte[] arr, int count)
         {
-            //using (var ms = new MemoryStream(arr, 0, arr.Length))
-            //{
-            //    BitmapImage biImg = new BitmapImage();
-            //    biImg.BeginInit();
-            //    biImg.CacheOption = BitmapCacheOption.OnLoad;
-            //    biImg.StreamSource = ms;
-            //    biImg.EndInit();
-
-            //    ImageSource imgSrc = biImg as ImageSource;
-
-            //    ScreenPic = imgSrc;
-
-
-            //}
-
-
-            using (var ms = new MemoryStream(arr))
+            using (var ms = new MemoryStream(arr, 0, count))
             {
-                Bitmap bitmap = new Bitmap(ms);
+                ms.Seek(0, SeekOrigin.Begin);
+                BitmapImage biImg = new BitmapImage();
+                biImg.BeginInit();
+                biImg.CacheOption = BitmapCacheOption.OnLoad;
+                biImg.StreamSource = ms;
+                biImg.EndInit();
 
-                ScreenPic = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(bitmap.GetHbitmap(), IntPtr.Zero, System.Windows.Int32Rect.Empty, BitmapSizeOptions.FromWidthAndHeight(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height));
+                ImageSource imgSrc = biImg as ImageSource;
+
+                ScreenPic = imgSrc;
             }
 
-            picB = null;
+            //using (var ms = new MemoryStream(arr, 0, count))
+            //{
+            //    ms.Seek(0, SeekOrigin.Begin);
+            //    Bitmap bitmap = new Bitmap(ms);
+
+
+            //    ScreenPic = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(bitmap.GetHbitmap(), IntPtr.Zero, System.Windows.Int32Rect.Empty, BitmapSizeOptions.FromWidthAndHeight(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height));
+            //}
         }
 
         //----------------------------------------------------------------------

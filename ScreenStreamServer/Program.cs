@@ -11,17 +11,17 @@ namespace ScreenStreamServer
 {
     class Program
     {
-        //static bool PlayStop = true;
-        //static System.Timers.Timer timer;
+        static bool PlayStop = true;
+        static System.Timers.Timer timer;
 
         static void Main(string[] args)
         {
-            //timer = new System.Timers.Timer();
-            //timer.Interval = 10;
+            timer = new System.Timers.Timer();
+            timer.Interval = 10;
 
-            //timer.Elapsed += SendScreen;
-            //timer.AutoReset = true;
-            //timer.Enabled = true;
+            timer.Elapsed += SendScreen;
+            timer.AutoReset = true;
+            timer.Enabled = true;
 
             //List<byte[]> picChunkL = new List<byte[]>();
 
@@ -98,6 +98,8 @@ namespace ScreenStreamServer
         }
 
         //------------------------------------------------------------------------
+
+        
 
         static byte[] SendScreen()
         {
