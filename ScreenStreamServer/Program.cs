@@ -27,6 +27,8 @@ namespace ScreenStreamServer
             timer.Elapsed += ((s, e) => StreamingScreenToClient() );
             timer.AutoReset = false;
             //timer.Enabled = true;
+            bool play = true;
+            bool pause = true;
 
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp); // 65Kb
             ep = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 7534);
@@ -51,10 +53,21 @@ namespace ScreenStreamServer
                     switch (msg)
                     {
                         case "Pause":
-                            timer.Stop();
+                            if (pause)
+                            {
+                                pause = false;
+                                timer.Stop();
+                            }
+                            play = true;
                             break;
                         case "Play":
-                            timer.Start();
+                            timer.Enabled = true;
+                            if (play)
+                            {
+                                play = false;
+                                timer.Start();
+                            }
+                            pause = true;
                             break;
                         case "":
                             goto NewClient;
@@ -83,9 +96,9 @@ namespace ScreenStreamServer
 
             var tempSendBytes = sendBytes.Length;
             var sendBytesCounter = 0;
-            bool exit = true;
+            bool exit = false;
 
-            while (exit)
+            while (true)
             {
                 var sendArr = new byte[SocketLength];
 
@@ -98,16 +111,24 @@ namespace ScreenStreamServer
 
                 socket.SendTo(sendArr, client);
 
+                if (exit)
+                {
+                    socket.SendTo(new byte[0], client);
+                    break;
+                }
+
                 tempSendBytes -= SocketLength;
                 sendBytesCounter += SocketLength;
+
                  
-                if (tempSendBytes - SocketLength < 0)
+                if (tempSendBytes < SocketLength)
                 {
                     SocketLength = tempSendBytes;
-                    exit = false;
-                    socket.SendTo(new byte[0], client);
+                    exit = true;
                 }
             }
+
+            timer.Enabled = false;
         }
 
         //------------------------------------------------------------------------
